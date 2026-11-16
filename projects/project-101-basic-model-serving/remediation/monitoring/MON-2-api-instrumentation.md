@@ -1,6 +1,12 @@
 # MON-2: Instrument API Requests and Predictions
 
-**Status:** Guide written; implementation not started.
+**Status:** Implemented; pending user review.
+
+## Implemented change
+
+[`src/api.py`](../../src/api.py) now exports `http_requests_total` by method, route template, and status code; `http_request_duration_seconds` by method and route; `predictions_total` by fixed success/error status; and `prediction_duration_seconds` for model execution. The middleware excludes `/metrics` to avoid counting scrape traffic. Prediction duration uses a monotonic timer and is recorded for successful and failed model calls.
+
+Focused tests compare registry samples before and after requests, including prediction success and failure, rather than assuming counters start at zero.
 
 ## What to measure
 

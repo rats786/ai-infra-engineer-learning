@@ -7,7 +7,7 @@ from typing import List, Optional
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
 from src.model import load_model
 
@@ -22,6 +22,26 @@ app = FastAPI(
 
 app.state.model = None
 app.state.start_time = time.time()
+
+HTTP_REQUESTS = Counter(
+    "http_requests_total",
+    "Total number of completed HTTP requests",
+    ["method", "route", "status_code"],
+)
+HTTP_REQUEST_DURATION = Histogram(
+    "http_request_duration_seconds",
+    "Duration of completed HTTP requests in seconds",
+    ["method", "route"],
+)
+PREDICTIONS = Counter(
+    "predictions_total",
+    "Total number of inference attempts by outcome",
+    ["status"],
+)
+PREDICTION_DURATION = Histogram(
+    "prediction_duration_seconds",
+    "Duration of model inference in seconds",
+)
 
 
 class PredictionRequest(BaseModel):
@@ -69,11 +89,20 @@ async def shutdown_event():
 
 @app.middleware("http")
 async def track_requests(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    duration = time.time() - start_time
-    logger.info("%s %s - %s - %.3fs", request.method, request.url.path, response.status_code, duration)
-    return response
+    start_time = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        duration = time.perf_counter() - start_time
+        if request.url.path != "/metrics":
+            route = request.scope.get("route")
+            route_path = getattr(route, "path", "unmatched")
+            HTTP_REQUESTS.labels(request.method, route_path, str(status_code)).inc()
+            HTTP_REQUEST_DURATION.labels(request.method, route_path).observe(duration)
+        logger.info("%s %s - %s - %.3fs", request.method, request.url.path, status_code, duration)
 
 
 @app.get("/")
@@ -118,9 +147,21 @@ async def predict(file: UploadFile = File(...), top_k: int = 5):
 
     try:
         image_bytes = await file.read()
-        start_timer = time.time()
-        predictions = app.state.model.predict(image_bytes, top_k=top_k)
-        inference_time_ms = (time.time() - start_timer) * 1000
+        start_timer = time.perf_counter()
+        try:
+            predictions = app.state.model.predict(image_bytes, top_k=top_k)
+        except ValueError:
+            PREDICTIONS.labels(status="error").inc()
+            raise
+        except Exception:
+            PREDICTIONS.labels(status="error").inc()
+            raise
+        else:
+            PREDICTIONS.labels(status="success").inc()
+        finally:
+            inference_duration_seconds = time.perf_counter() - start_timer
+            PREDICTION_DURATION.observe(inference_duration_seconds)
+        inference_time_ms = inference_duration_seconds * 1000
         return PredictionResponse(
             predictions=predictions,
             inference_time_ms=float(inference_time_ms),
