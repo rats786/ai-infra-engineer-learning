@@ -120,7 +120,7 @@ By completing this project, you will be able to:
 
 ### Required Technologies
 
-- **Python 3.9+** - Application language
+- **Python 3.9+ (3.10-3.12 tested; 3.11 recommended)** - Application language
 - **PyTorch** - ML framework
 - **FastAPI** - Web framework for API
 - **Uvicorn** - ASGI server

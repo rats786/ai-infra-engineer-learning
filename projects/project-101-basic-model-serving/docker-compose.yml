@@ -12,7 +12,7 @@ services:
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - MODEL_PATH=/app/models/resnet18.pth
-      - PROMETHEUS_ENABLED=true
+        - PROMETHEUS_ENABLED=true
     volumes:
       - ./models:/app/models:ro
       - ./logs:/app/logs
