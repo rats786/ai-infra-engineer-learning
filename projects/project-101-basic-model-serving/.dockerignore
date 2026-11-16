@@ -1,0 +1,36 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test and coverage output
+.coverage
+.coverage.*
+htmlcov/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local runtime artifacts
+logs/
+*.log
+act/
+models/
+
+# Editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db

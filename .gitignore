@@ -109,6 +109,7 @@ coverage.xml
 
 # Docker
 *.dockerignore
+!projects/project-101-basic-model-serving/.dockerignore
 
 # Terraform
 *.tfstate

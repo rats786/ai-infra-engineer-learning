@@ -8,6 +8,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .pyre/
+!.dockerignore
 
 # Virtual environments
 venv/
