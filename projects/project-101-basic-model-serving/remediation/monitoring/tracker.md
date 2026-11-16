@@ -35,17 +35,17 @@ Avoid metric labels that can take a huge number of values, such as image filenam
 - `monitoring/grafana/datasources/prometheus.yml` points Grafana to `http://prometheus:9090`.
 - `src/api.py` serves Prometheus-formatted runtime, request, and inference metrics.
 - The Grafana dashboard provider is configured, but no dashboard JSON is present yet.
-- Compose and application settings advertise metrics enable/port options that the API does not use; Prometheus scrapes `/metrics` unconditionally.
+- The API always exposes `/metrics` on its API port, matching Prometheus' unconditional scrape configuration.
 
 ## Work Items
 
-Work top to bottom. MON-1 and MON-2 are implemented and pending review; MON-3 is not started.
+Work top to bottom. MON-1, MON-2, and MON-3 are implemented and pending review.
 
 | ID | Priority | Status | Summary | Solution guide |
 | --- | --- | --- | --- | --- |
 | MON-1 | High | Pending review | Serve valid Prometheus exposition instead of a hard-coded sample. | [MON-1: Prometheus format](MON-1-prometheus-format.md) |
 | MON-2 | High | Pending review | Add bounded-cardinality request, prediction, and duration metrics. | [MON-2: API instrumentation](MON-2-api-instrumentation.md) |
-| MON-3 | Medium | Not started | Make metrics configuration agree with API behavior and the scrape configuration. | [MON-3: Metrics setting](MON-3-metrics-setting.md) |
+| MON-3 | Medium | Pending review | Keep metrics configuration consistent with the always-on scrape endpoint. | [MON-3: Metrics setting](MON-3-metrics-setting.md) |
 | MON-4 | Medium | Not started | Provision a Grafana dashboard for availability, traffic, errors, and latency. | [MON-4: Grafana dashboard](MON-4-grafana-dashboard.md) |
 | MON-5 | Medium | Not started | Validate the complete Compose monitoring workflow. | [MON-5: End-to-end check](MON-5-end-to-end-check.md) |
 

@@ -37,9 +37,6 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
     log_format: str = Field(default="json", description="Log format")
 
-    enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")
-    metrics_port: int = Field(default=8000, description="Port for metrics overview")
-
     enable_cache: bool = Field(default=False, description="Enable prediction caching")
     cache_size: int = Field(default=1000, description="Cache size")
     cache_ttl_seconds: int = Field(default=300, description="Cache TTL in seconds")
@@ -60,7 +57,7 @@ class Settings(BaseSettings):
             raise ValueError(f"Environment must be one of: {allowed}")
         return normalized
 
-    @validator("port", "metrics_port")
+    @validator("port")
     def validate_port(cls, value):
         if not 1 <= int(value) <= 65535:
             raise ValueError("Port must be between 1 and 65535")

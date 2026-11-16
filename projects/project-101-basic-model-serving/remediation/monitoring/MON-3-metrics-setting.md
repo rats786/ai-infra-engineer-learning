@@ -1,16 +1,16 @@
 # MON-3: Make Metrics Configuration Consistent
 
-**Status:** Guide written; implementation not started.
+**Status:** Implemented; pending user review.
 
-## Current mismatch
+## Original mismatch
 
 [`docker-compose.yml`](../../docker-compose.yml) sets `PROMETHEUS_ENABLED=true`, while [`src/config.py`](../../src/config.py) defines `enable_metrics`. The API does not currently use either setting, and Prometheus is configured to scrape `/metrics` unconditionally in [`monitoring/prometheus.yml`](../../monitoring/prometheus.yml). This makes the apparent switch misleading.
 
-## Recommended choice for this project
+## Implemented choice for this project
 
-For the local learning stack, keep the scrape endpoint always available because Prometheus is always configured to scrape it. Remove the unused `PROMETHEUS_ENABLED` environment entry from Compose and remove or clearly deprecate the unused `enable_metrics` setting (and `metrics_port` if it is not used elsewhere). Then document that the API exposes metrics whenever it is running.
+The API keeps `/metrics` always available because Prometheus is configured to scrape it unconditionally. The unused `PROMETHEUS_ENABLED` entry was removed from Compose and `.env.example`; the unused `enable_metrics` and `metrics_port` settings were removed from `Settings`. Metrics are served on the API's existing port.
 
-This is the smallest coherent setup: there is no “disabled” state that unexpectedly makes a configured Prometheus target fail.
+This avoids a misleading “disabled” state that would unexpectedly make a configured Prometheus target fail.
 
 ## If a real on/off switch is required
 
