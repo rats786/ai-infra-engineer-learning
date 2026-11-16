@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# Virtual environments
+venv/
+.venv/
+
+# Test and coverage outputs
+.coverage
+.coverage.*
+htmlcov/
+
+# Local config and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and runtime data
+logs/
+*.log
+
+# Project-local tooling
+act/
+models/
+.trivy/
+
+# Editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db
