@@ -1,6 +1,8 @@
 """Tests for the FastAPI application."""
 
 import io
+import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -139,3 +141,30 @@ def test_predict_with_invalid_image(client, invalid_image):
         files={"file": ("bad.txt", invalid_image, "text/plain")},
     )
     assert response.status_code in {400, 422}
+
+
+def test_grafana_dashboard_is_provisioned_and_queries_metrics():
+    dashboard_path = (
+        Path(__file__).resolve().parents[1] / "monitoring" / "grafana" / "dashboards" / "ml-api-overview.json"
+    )
+
+    assert dashboard_path.exists()
+
+    dashboard = json.loads(dashboard_path.read_text(encoding="utf-8"))
+    assert dashboard.get("uid") == "ml-api-overview"
+    panel_expressions = {
+        panel["title"]: target["expr"]
+        for panel in dashboard.get("panels", [])
+        for target in panel.get("targets", [])
+    }
+
+    assert "API availability" in panel_expressions
+    assert panel_expressions["API availability"] == 'up{job="ml-api"}'
+    assert panel_expressions["Request rate"] == "sum(rate(http_requests_total[5m]))"
+    assert panel_expressions["5xx error rate"] == 'sum(rate(http_requests_total{status_code=~"5.."}[5m]))'
+    assert panel_expressions["p95 request duration"] == (
+        "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))"
+    )
+    assert panel_expressions["p95 inference duration"] == (
+        "histogram_quantile(0.95, sum by (le) (rate(prediction_duration_seconds_bucket[5m])))"
+    )

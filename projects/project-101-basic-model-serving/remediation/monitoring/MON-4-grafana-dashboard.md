@@ -1,6 +1,6 @@
 # MON-4: Provision a Grafana Dashboard
 
-**Status:** Guide written; implementation not started.
+**Status:** Implemented and provisioned.
 
 ## How provisioning works here
 

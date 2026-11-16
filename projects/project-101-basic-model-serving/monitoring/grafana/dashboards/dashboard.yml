@@ -11,10 +11,3 @@ providers:
     options:
       path: /etc/grafana/provisioning/dashboards
       foldersFromFilesStructure: true
-
-# TODO: Create actual dashboard JSON files
-# Example: ml-api-dashboard.json
-# - Request rate, latency, error rate
-# - Model inference time
-# - GPU/CPU utilization
-# - Memory usage

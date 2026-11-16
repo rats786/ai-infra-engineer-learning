@@ -1,6 +1,6 @@
 # MON-5: Verify Monitoring End to End
 
-**Status:** Guide written; implementation not started.
+**Status:** Verified against the local Compose stack.
 
 ## Goal
 
