@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.model import load_model
 
@@ -134,8 +135,7 @@ async def predict(file: UploadFile = File(...), top_k: int = 5):
 
 @app.get("/metrics")
 async def metrics():
-    data = "# metrics for ml-model-serving\napp_uptime_seconds 1\n"
-    return Response(content=data, media_type="text/plain; version=0.7.0")
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 def preprocess_image(image_bytes: bytes):

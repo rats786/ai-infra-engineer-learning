@@ -43,6 +43,15 @@ def test_health_check(client):
     assert "model_loaded" in payload
 
 
+def test_metrics_endpoint_returns_prometheus_exposition(client):
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain; version=0.0.4")
+    assert "python_gc_objects_collected_total" in response.text
+    assert "app_uptime_seconds 1" not in response.text
+
+
 def test_predict_with_valid_image(client, sample_image):
     response = client.post(
         "/predict",

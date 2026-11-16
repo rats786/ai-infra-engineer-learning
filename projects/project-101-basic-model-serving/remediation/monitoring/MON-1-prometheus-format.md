@@ -1,19 +1,16 @@
 # MON-1: Return Valid Prometheus Metrics
 
-**Status:** Guide written; implementation not started.
+**Status:** Implemented; pending user review.
 
 ## Why this matters
 
-Prometheus expects `/metrics` to use a recognized text exposition format. The current endpoint in [`src/api.py`](../../src/api.py) hand-writes one sample and labels the response `version=0.7.0`. Prometheus' classic text format is version `0.0.4`; the `prometheus-client` package already listed in `requirements.txt` generates the correct body and content type.
+Prometheus expects `/metrics` to use a recognized text exposition format. The previous endpoint hand-wrote one sample and labeled the response `version=0.7.0`. Prometheus' classic text format is version `0.0.4`; the `prometheus-client` package already listed in `requirements.txt` generates the correct body and content type.
 
 A successful HTTP response alone is not enough: Prometheus must also parse the response. A format problem typically appears as a scrape error and makes the target **DOWN**.
 
-## Suggested implementation
+## Implemented change
 
-1. Import `CONTENT_TYPE_LATEST` and `generate_latest` from `prometheus_client`.
-2. Replace the hard-coded string in `/metrics` with a `Response` whose content is `generate_latest()` and whose media type is `CONTENT_TYPE_LATEST`.
-3. Remove the fake `app_uptime_seconds 1` sample. Live application metrics will be added in MON-2.
-4. Add an API test that checks status `200`, the content type starts with `text/plain; version=0.0.4`, and the body contains a known metric emitted by the Prometheus client registry. Do not assert an exact full body because runtime/client metrics can vary by Python version.
+The `/metrics` handler returns `generate_latest()` with `CONTENT_TYPE_LATEST`, removing the fixed placeholder and using a supported Prometheus text format. An API test checks the status, content type, generated client metric, and absence of the old placeholder.
 
 Example endpoint shape:
 
