@@ -115,19 +115,96 @@ project-101-basic-model-serving/
 └── README.md
 ```
 
-## Local validation workflow
+## Local testing for an end user
 
-Useful commands for this project include:
+This section is designed for someone running the project on their own laptop or workstation. It covers the most important local checks for the current branch without requiring a Kubernetes cluster.
+
+### 1. Start the stack
+
+From the repository root:
 
 ```bash
 docker compose up -d
+```
+
+Then confirm the containers are running:
+
+```bash
 docker compose ps
+```
+
+You should see the API container and the monitoring services in the Compose stack.
+
+### 2. Check the API is healthy
+
+```bash
 curl http://localhost:8000/health
+```
+
+Expected result:
+
+- HTTP 200 response
+- JSON payload indicating whether the model is loaded and healthy
+
+### 3. Verify metrics are exposed
+
+```bash
 curl http://localhost:8000/metrics
+```
+
+Expected result:
+
+- Prometheus-formatted text
+- includes metric lines such as request and inference metrics
+- response content type is Prometheus-compatible
+
+### 4. Exercise the prediction endpoint
+
+Send a sample image to the prediction route. A common local test is to use a PNG or JPG file from a known dataset or generated placeholder image.
+
+```bash
+curl -X POST "http://localhost:8000/predict?top_k=3" \
+  -F "file=@./path/to/sample-image.png"
+```
+
+Expected result:
+
+- HTTP 200 for a valid image
+- JSON result with top predictions and confidence values
+- if the model is not trained or weights are not loaded, the response will still be structured but the semantic predictions may not be meaningful
+
+### 5. Check the monitoring UI
+
+Prometheus and Grafana are part of the local validation flow:
+
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+
+Useful checks:
+
+- Prometheus targets page: http://localhost:9090/targets
+- Grafana login defaults to the Compose-provided credentials unless changed in configuration
+- query `up` or application metric names in Grafana or Prometheus
+
+### 6. Run tests locally
+
+```bash
 pytest -q
 ```
 
-For the monitoring setup, Prometheus and Grafana are expected to be validated through the local Compose stack and the files under [monitoring/](monitoring/).
+For a focused API check:
+
+```bash
+pytest tests/test_api.py -q
+```
+
+### 7. Stop the stack
+
+```bash
+docker compose down
+```
+
+This preserves the named volumes for local reuse; `docker compose down --volumes` removes persistent monitoring state.
 
 ## Notes on scope
 
