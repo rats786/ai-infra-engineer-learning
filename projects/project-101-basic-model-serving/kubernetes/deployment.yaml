@@ -129,7 +129,7 @@ spec:
         # If liveness fails, Kubernetes will restart the pod
         livenessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 8000
           initialDelaySeconds: 60    # Wait 60s before first check
           periodSeconds: 10           # Check every 10s

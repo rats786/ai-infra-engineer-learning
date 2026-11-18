@@ -46,12 +46,30 @@ def test_root_endpoint(client):
     assert "message" in payload
 
 
-def test_health_check(client):
+def test_health_check_when_model_is_loaded(client, monkeypatch):
+    monkeypatch.setattr(app.state, "model", object())
+
     response = client.get("/health")
+
     assert response.status_code == 200
     payload = response.json()
-    assert payload["status"] in {"healthy", "unhealthy"}
-    assert "model_loaded" in payload
+    assert payload["status"] == "healthy"
+    assert payload["model_loaded"] is True
+
+
+def test_health_check_returns_service_unavailable_when_model_is_not_loaded(
+    client, monkeypatch
+):
+    def fail_if_model_load_is_attempted(*args, **kwargs):
+        pytest.fail("The health check must not try to load the model")
+
+    monkeypatch.setattr(app.state, "model", None)
+    monkeypatch.setattr("src.api.load_model", fail_if_model_load_is_attempted)
+
+    response = client.get("/health")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Model is not loaded"
 
 
 def test_metrics_endpoint_returns_prometheus_exposition(client):

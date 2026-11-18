@@ -113,16 +113,11 @@ async def root():
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     if app.state.model is None:
-        try:
-            app.state.model = load_model("resnet18", "cpu")
-        except Exception as exc:  # pragma: no cover - fallback path
-            logger.warning("Lazy model load failed during health check: %s", exc)
+        raise HTTPException(status_code=503, detail="Model is not loaded")
 
-    model_loaded = app.state.model is not None
-    status = "healthy" if model_loaded else "unhealthy"
     return HealthResponse(
-        status=status,
-        model_loaded=model_loaded,
+        status="healthy",
+        model_loaded=True,
         version="1.0.0",
         uptime_seconds=time.time() - app.state.start_time,
     )
