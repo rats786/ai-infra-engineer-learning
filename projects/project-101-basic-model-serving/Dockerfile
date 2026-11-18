@@ -164,13 +164,13 @@ CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8
 # Build Instructions
 # ==============================================================================
 # To build this image:
-# docker build -t ml-model-serving:v1.0 .
+# docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
 #
 # To build with specific model:
-# docker build --build-arg MODEL_NAME=resnet50 -t ml-model-serving:v1.0 .
+# docker build --build-arg MODEL_NAME=resnet50 -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
 #
 # To run the container:
-# docker run -p 8000:8000 ml-model-serving:v1.0
+# docker run -p 8000:8000 ghcr.io/rats786/project-101-basic-model-serving:v1.0
 #
 # To run with GPU:
 # docker run --gpus all -p 8000:8000 ml-model-serving-gpu:v1.0
@@ -203,8 +203,8 @@ CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8
 # ✅ Scan images for vulnerabilities
 #
 # Scan with:
-# docker scan ml-model-serving:v1.0
-# trivy image ml-model-serving:v1.0
+# docker scan ghcr.io/rats786/project-101-basic-model-serving:v1.0
+# trivy image ghcr.io/rats786/project-101-basic-model-serving:v1.0
 # ==============================================================================
 
 # ==============================================================================

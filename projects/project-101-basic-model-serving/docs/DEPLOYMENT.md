@@ -86,14 +86,14 @@ kubectl get nodes
 ### Step 2: Build Docker Image
 
 ```bash
-# Build image
-docker build -t ml-api:v1 .
+# Build the image using the same reference as the Kubernetes Deployment
+docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
 
 # Load image into minikube
-minikube image load ml-api:v1
+minikube image load ghcr.io/rats786/project-101-basic-model-serving:v1.0
 
 # Verify
-minikube image ls | grep ml-api
+minikube image ls | grep project-101-basic-model-serving
 ```
 
 ### Step 3: Deploy to Kubernetes
@@ -172,6 +172,20 @@ minikube stop
 ---
 
 ## Option 3: Cloud Kubernetes (Production)
+
+The Kubernetes Deployment uses the public GHCR image
+`ghcr.io/rats786/project-101-basic-model-serving:v1.0`. Publish it with:
+
+```bash
+git tag project-101-basic-model-serving-v1.0
+git push origin project-101-basic-model-serving-v1.0
+```
+
+The repository workflow builds and publishes the image. After its first
+publish, change the GHCR package visibility to **Public** so cluster nodes can
+pull it without credentials.
+Provider-specific registry examples below are alternatives; update the
+Deployment image to match the image you publish.
 
 ### Step 3a: Google Kubernetes Engine (GKE)
 
@@ -262,6 +276,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/ml-api:v1
 
 **Deploy:**
 ```bash
+# If using ECR instead of the default GHCR image, update the Deployment image first.
 kubectl apply -f kubernetes/ -n ml-serving
 kubectl get svc -n ml-serving  # The API Service is internal (ClusterIP)
 ```
@@ -301,6 +316,7 @@ az acr build --registry mlacr --image ml-api:v1 .
 
 **Deploy:**
 ```bash
+# If using ACR instead of the default GHCR image, update the Deployment image first.
 kubectl apply -f kubernetes/ -n ml-serving
 kubectl get svc -n ml-serving
 ```

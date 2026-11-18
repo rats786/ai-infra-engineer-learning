@@ -2,25 +2,24 @@
 
 **Status:** Open
 
-## Why this matters
+## Current implementation
 
-The manifest references `ml-model-serving:v1.0` with `imagePullPolicy: IfNotPresent`. This only works when the image is already available on each node or is resolvable from a configured registry. A clean cluster or a different node pool may fail to pull the image.
+The Deployment references the versioned GHCR image
+`ghcr.io/rats786/project-101-basic-model-serving:v1.0` with
+`imagePullPolicy: IfNotPresent`. A tag-triggered GitHub Actions workflow builds
+and publishes the image. After its first publish, the GHCR package must be made
+public for unauthenticated cluster pulls.
 
-## Root cause
+## Verification still required
 
-The repository does not yet define a production-grade image build/publish workflow or a registry target that every cluster node can resolve. The manifest therefore depends on local assumptions that do not hold in a real Kubernetes environment.
+The repository does not have a Kubernetes cluster validation recorded yet.
+Deploy on a clean node and confirm all pods start without `ErrImagePull` or
+`ImagePullBackOff` before closing this item.
 
-## Recommended fix
+## Release process
 
-1. Publish the image to an accessible registry (for example, registry or a cluster-managed registry).
-2. Use a full image name and tag that the cluster can resolve.
-3. Configure the image pull policy to match the deployment pattern.
-4. Validate the image on a fresh node or clean cluster before moving to production.
-
-## Acceptance criteria
-
-- The pod starts without `ErrImagePull` or `ImagePullBackOff`.
-- The image is resolvable from all nodes that run the workload.
-- The deployment is reproducible across a clean environment.
+Push a tag named `project-101-basic-model-serving-v<version>` to build and
+publish the matching `v<version>` image tag. Update the Deployment image when
+releasing a new version.
 
 See the [tracker](tracker.md) for the full Kubernetes remediation checklist.

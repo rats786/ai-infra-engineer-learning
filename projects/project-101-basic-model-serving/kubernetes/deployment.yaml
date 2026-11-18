@@ -63,20 +63,9 @@ spec:
       containers:
       - name: ml-api
 
-        # TODO: Set container image
-        # Format: registry/repository:tag
-        # Examples:
-        # - docker.io/username/ml-model-serving:v1.0
-        # - gcr.io/project-id/ml-model-serving:v1.0
-        # - your-registry.com/ml-model-serving:v1.0
-        #
-        # For development, can use local image with imagePullPolicy: Never
-        image: ml-model-serving:v1.0
+        image: ghcr.io/rats786/project-101-basic-model-serving:v1.0
 
-        # TODO: Set image pull policy
-        # - Always: Always pull the image
-        # - IfNotPresent: Pull if not cached locally (default)
-        # - Never: Never pull, use local only
+        # Versioned release tags are published by the GHCR workflow.
         imagePullPolicy: IfNotPresent
 
         # TODO: Define container ports
