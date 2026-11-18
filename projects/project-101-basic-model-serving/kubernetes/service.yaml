@@ -14,32 +14,17 @@ metadata:
     tier: serving
     component: api
 
-  # TODO: Add annotations
-  # Used by cloud providers and service meshes
+  # Used by service meshes and monitoring
   annotations:
-    # For AWS Load Balancer
-    # service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    # service.beta.kubernetes.io/aws-load-balancer-internal: "false"
-
-    # For GCP Load Balancer
-    # cloud.google.com/load-balancer-type: "Internal"
-
     # For Prometheus monitoring
     prometheus.io/scrape: "true"
     prometheus.io/port: "8000"
     prometheus.io/path: "/metrics"
 
 spec:
-  # TODO: Define service type
-  # Options:
-  # - ClusterIP: Only accessible within cluster (default)
-  # - NodePort: Accessible via <NodeIP>:<NodePort>
-  # - LoadBalancer: Creates cloud load balancer (AWS ELB, GCP LB, etc.)
-  # - ExternalName: Maps to external DNS name
-  #
-  # For development (minikube): Use NodePort or LoadBalancer with minikube tunnel
-  # For production: Use LoadBalancer or ClusterIP with Ingress
-  type: LoadBalancer
+  # Keep the API cluster-internal; expose it only through an explicitly
+  # configured, access-controlled ingress or API gateway.
+  type: ClusterIP
 
   # TODO: Define selector
   # Must match labels in deployment pod template
@@ -66,42 +51,16 @@ spec:
   #   clientIP:
   #     timeoutSeconds: 10800  # 3 hours
 
-  # TODO: Configure external traffic policy
-  # Cluster: Distributes traffic to all nodes (may add extra hop)
-  # Local: Only routes to pods on receiving node (preserves source IP)
-  externalTrafficPolicy: Cluster
-
   # TODO: Configure internal traffic policy (Kubernetes 1.22+)
   # Similar to externalTrafficPolicy but for cluster-internal traffic
   # internalTrafficPolicy: Cluster
 
 ---
 # ==============================================================================
-# Alternative: ClusterIP Service (for internal access)
-# ==============================================================================
-# If you only need internal cluster access (e.g., accessed via Ingress):
-#
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: ml-model-serving-service
-#   labels:
-#     app: ml-model-serving
-# spec:
-#   type: ClusterIP
-#   selector:
-#     app: ml-model-serving
-#   ports:
-#   - port: 8000
-#     targetPort: 8000
-#
-# ==============================================================================
-
----
-# ==============================================================================
 # Alternative: NodePort Service (for development)
 # ==============================================================================
-# For local development without load balancer:
+# Optional only for a trusted development cluster; do not use to expose
+# an unauthenticated API to untrusted networks.
 #
 # apiVersion: v1
 # kind: Service
@@ -155,16 +114,13 @@ spec:
 # kubectl get services
 # kubectl describe service ml-model-serving-service
 #
-# To get service URL (LoadBalancer):
-# kubectl get service ml-model-serving-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-#
-# For minikube:
-# minikube service ml-model-serving-service --url
-# minikube tunnel  # For LoadBalancer type
+# The ClusterIP is reachable only from within the cluster.
+# For local testing, use:
+# kubectl port-forward service/ml-model-serving-service 8000:80
 #
 # To test service:
-# curl http://<SERVICE-IP>/health
-# curl -X POST http://<SERVICE-IP>/predict -F "file=@image.jpg"
+# curl http://localhost:8000/health
+# curl -X POST http://localhost:8000/predict -F "file=@image.jpg"
 #
 # ==============================================================================
 

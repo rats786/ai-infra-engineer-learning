@@ -13,10 +13,10 @@ This project implements a production-ready ML model serving system with REST API
                                                     └──────┬──────┘
                                                            │
                                                            │ queries
-┌──────────┐         ┌──────────────┐         ┌──────────▼──────┐
-│  Client  │────────▶│ Load Balancer│────────▶│   Prometheus    │
-│ (User)   │  HTTP   │  (Service)   │         │   Monitoring    │
-└──────────┘  Req    └──────┬───────┘         └─────────────────┘
+┌──────────────────┐  ┌─────────────────┐     ┌──────────▼──────┐
+│ In-cluster       │─▶│ ClusterIP       │     │   Prometheus    │
+│ Client           │  │ Service         │     │   Monitoring    │
+└──────────────────┘  └──────┬──────────┘     └─────────────────┘
                              │                          │
                              │                          │ scrapes metrics
                              ▼                          │
@@ -169,7 +169,7 @@ Kubernetes Cluster
 │   ├── Pod 1 (replica)
 │   ├── Pod 2 (replica)
 │   └── Pod N (auto-scaled)
-├── Service: ml-api-service (LoadBalancer)
+├── Service: ml-model-serving-service (ClusterIP; internal only)
 ├── ConfigMap: ml-api-config
 ├── HPA: ml-api-hpa (auto-scaling rules)
 ├── Prometheus: monitoring namespace

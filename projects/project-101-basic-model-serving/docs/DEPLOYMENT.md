@@ -134,12 +134,11 @@ kubectl logs -f deployment/ml-api -n ml-serving
 
 ### Step 5: Access the API
 
-```bash
-# Get service URL
-minikube service ml-api-service -n ml-serving --url
+The Service is `ClusterIP` and is reachable only from within the cluster. For
+local testing, forward a local port:
 
-# Or use port-forward
-kubectl port-forward -n ml-serving svc/ml-api-service 8000:80
+```bash
+kubectl port-forward -n ml-serving svc/ml-model-serving-service 8000:80
 
 # Test
 curl http://localhost:8000/health
@@ -213,8 +212,12 @@ docker push gcr.io/$PROJECT_ID/ml-api:v1
 **Deploy:**
 ```bash
 kubectl apply -f kubernetes/ -n ml-serving
-kubectl get svc -n ml-serving  # Get external IP
+kubectl get svc -n ml-serving  # The API Service is internal (ClusterIP)
 ```
+
+The API is not publicly exposed by default. If external access is required,
+configure an authenticated, access-controlled ingress or API gateway before
+exposing it.
 
 **Cleanup:**
 ```bash
@@ -260,7 +263,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/ml-api:v1
 **Deploy:**
 ```bash
 kubectl apply -f kubernetes/ -n ml-serving
-kubectl get svc -n ml-serving  # Get LoadBalancer DNS
+kubectl get svc -n ml-serving  # The API Service is internal (ClusterIP)
 ```
 
 **Cleanup:**
@@ -329,13 +332,14 @@ kubectl describe pod <pod-name> -n ml-serving
 ```bash
 # Check service
 kubectl get svc -n ml-serving
-kubectl describe svc ml-api-service -n ml-serving
+kubectl describe svc ml-model-serving-service -n ml-serving
 
 # Check endpoints
 kubectl get endpoints -n ml-serving
 
-# For LoadBalancer, ensure cloud provider supports it
-# Or use NodePort/port-forward for testing
+# The API Service is internal (ClusterIP); use port-forward for local testing.
+# External access requires a separately configured, access-controlled ingress
+# or API gateway.
 ```
 
 ### High Memory Usage
