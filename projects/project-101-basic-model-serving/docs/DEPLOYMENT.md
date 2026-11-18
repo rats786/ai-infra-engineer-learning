@@ -156,7 +156,36 @@ kubectl port-forward -n monitoring svc/prometheus 9090:9090
 # Visit http://localhost:9090/targets and confirm the ml-api target is UP.
 ```
 
-### Step 7: Cleanup
+### Step 7: Deploy Grafana
+
+Create the admin credential Secret in the `monitoring` namespace before
+applying the Kustomize configuration. Enter a strong password in the shell
+without committing it to the repository:
+
+```bash
+read -s -p "Grafana admin password: " GRAFANA_ADMIN_PASSWORD
+echo
+kubectl create secret generic grafana-credentials \
+  --namespace monitoring \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$GRAFANA_ADMIN_PASSWORD"
+unset GRAFANA_ADMIN_PASSWORD
+
+kubectl apply -k monitoring
+kubectl get pods,svc,pvc -n monitoring
+```
+
+The Grafana Service is internal. For local access, run:
+
+```bash
+kubectl port-forward -n monitoring svc/grafana 3000:3000
+```
+
+Then open `http://localhost:3000` and sign in with the username and password
+stored in the Secret. Grafana data uses a 1Gi PersistentVolumeClaim, which
+requires a default StorageClass in the cluster.
+
+### Step 8: Cleanup
 
 ```bash
 kubectl delete namespace ml-serving

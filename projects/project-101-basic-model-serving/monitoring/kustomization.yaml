@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - kubernetes/grafana/grafana.yaml
+configMapGenerator:
+  - name: grafana-datasource
+    files:
+      - kubernetes/grafana/provisioning/datasources/prometheus.yaml
+  - name: grafana-dashboard-provider
+    files:
+      - kubernetes/grafana/provisioning/dashboards/provider.yaml
+  - name: grafana-dashboard
+    files:
+      - dashboard.json=grafana/dashboards/ml-api-overview.json
