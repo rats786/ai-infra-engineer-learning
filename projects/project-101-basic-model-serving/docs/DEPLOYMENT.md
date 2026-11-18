@@ -144,27 +144,23 @@ kubectl port-forward -n ml-serving svc/ml-model-serving-service 8000:80
 curl http://localhost:8000/health
 ```
 
-### Step 6: Deploy Monitoring
+### Step 6: Deploy Prometheus
 
 ```bash
-# Install Prometheus (using Helm)
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
+# Prometheus is a separate platform workload with an internal ClusterIP.
+kubectl apply -f monitoring/kubernetes/prometheus.yaml
+kubectl get pods,svc -n monitoring
 
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring --create-namespace
-
-# Access Grafana
-kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
-
-# Login: admin / prom-operator
+# Inspect the API target
+kubectl port-forward -n monitoring svc/prometheus 9090:9090
+# Visit http://localhost:9090/targets and confirm the ml-api target is UP.
 ```
 
 ### Step 7: Cleanup
 
 ```bash
 kubectl delete namespace ml-serving
-helm uninstall prometheus -n monitoring
+kubectl delete namespace monitoring
 minikube stop
 # Or: minikube delete
 ```
