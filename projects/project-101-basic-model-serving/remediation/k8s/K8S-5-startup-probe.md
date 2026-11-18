@@ -2,25 +2,20 @@
 
 **Status:** Open
 
-## Why this matters
+## Current implementation
 
-Model loading can take longer than the default liveness timing. Without a startup probe, Kubernetes may kill the container before initialization completes, which creates a flapping or crashing deployment.
+The Deployment has a startup probe on `/` with a 10-second period and a
+failure threshold of 30, allowing up to 5 minutes for the application to start
+responding before liveness and readiness probes begin.
 
-## Root cause
+The startup probe checks process responsiveness rather than model readiness.
+The existing `/health` readiness probe continues to keep a pod out of Service
+endpoints when model loading fails.
 
-The deployment does not include a startup probe, and the app is likely slower than the liveness threshold during model initialization. This is especially relevant for a model-serving container that downloads or loads a large model artifact.
+## Verification still required
 
-## Recommended fix
-
-1. Add a startup probe that checks a lightweight endpoint or process state before the container is considered started.
-2. Give the app enough time to finish model load and warm-up.
-3. Keep liveness focused on runtime health rather than startup timing.
-4. Use a longer `failureThreshold` or `periodSeconds` if the model is large or slow.
-
-## Acceptance criteria
-
-- The container is not restarted while model initialization is still running.
-- Once the model is ready, the pod becomes `Ready` and begins receiving traffic.
-- Liveness checks do not mask startup delays.
+Test a startup longer than the liveness delay but shorter than the five-minute
+window. Confirm Kubernetes does not restart the container during startup and
+the pod becomes Ready after model initialization.
 
 See the [tracker](tracker.md) for the remaining K8S items and the verification sequence.

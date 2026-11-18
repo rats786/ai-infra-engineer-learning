@@ -167,11 +167,14 @@ resources:
   limits:
     memory: "2Gi"  # Increase from 1Gi
 
-# If health check failing, adjust timing
-livenessProbe:
-  initialDelaySeconds: 60  # Increase if model loading is slow
-  periodSeconds: 30
-  timeoutSeconds: 10
+# For slow application startup, allow a longer startup window:
+startupProbe:
+  httpGet:
+    path: /
+    port: 8000
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30  # 5-minute startup window
 ```
 
 ---

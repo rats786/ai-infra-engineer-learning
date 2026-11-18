@@ -142,17 +142,15 @@ spec:
           successThreshold: 1         # 1 success = ready
           failureThreshold: 3         # 3 failures = not ready
 
-        # TODO: Define startup probe (optional)
-        # For applications with slow startup
-        # While startup probe fails, liveness/readiness probes are disabled
-        # startupProbe:
-        #   httpGet:
-        #     path: /health
-        #     port: 8000
-        #   initialDelaySeconds: 0
-        #   periodSeconds: 10
-        #   timeoutSeconds: 3
-        #   failureThreshold: 30      # 30 * 10s = 5 minutes max startup time
+        # Allow up to 5 minutes for application startup before liveness/readiness begin.
+        # Keep this on / so model load failure leaves the pod NotReady without restarting it.
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8000
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
 
         # TODO: Mount volumes (if needed)
         # volumeMounts:
