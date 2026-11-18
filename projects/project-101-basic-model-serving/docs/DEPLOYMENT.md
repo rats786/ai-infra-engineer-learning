@@ -185,6 +185,14 @@ Then open `http://localhost:3000` and sign in with the username and password
 stored in the Secret. Grafana data uses a 1Gi PersistentVolumeClaim, which
 requires a default StorageClass in the cluster.
 
+### External access policy
+
+The manifests do not install an ingress controller or create public Ingress
+routes. The API, Prometheus, and Grafana Services remain internal. Manage any
+ingress controller as cluster infrastructure; only add a route after its
+hostname, TLS certificate, and access-control policy are approved. Do not
+expose the unauthenticated API publicly.
+
 ### Step 8: Cleanup
 
 ```bash

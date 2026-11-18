@@ -2,27 +2,26 @@
 
 **Status:** Open
 
-## Why this matters
+## Current implementation
 
-The ingress controller is cluster infrastructure, not an application component of the API deployment. Access patterns, TLS, and authentication should be configured at the ingress layer rather than by exposing Services directly to the public internet.
+The API, Prometheus, and Grafana Services are `ClusterIP`. The repository does
+not install an ingress controller or define public Ingress routes. This keeps
+the unauthenticated API private by default; any controller remains a
+cluster/platform responsibility.
 
-## Root cause
+## External route policy
 
-The current Service is a `LoadBalancer` and there is no defined ingress or platform-control boundary. That makes routing, TLS, and access policy decisions implicit and hard to audit.
+No hostname, TLS certificate, or public API authentication policy is defined
+for this project, so no public route is configured. If external access is
+approved later, define an explicit Ingress using the platform-managed
+controller, require TLS, and protect Grafana and any API route with the
+appropriate authentication and access controls. Add API authentication before
+creating a public inference route.
 
-## Recommended fix
+## Verification still required
 
-1. Install or manage the ingress controller as cluster/platform infrastructure.
-2. Keep the API Service internal unless a public route is explicitly approved.
-3. Define explicit Ingress resources for the routes that need external exposure.
-4. Configure TLS and access controls for Grafana and any public API route.
-5. Keep internal monitoring traffic off public ingress paths.
-
-## Acceptance criteria
-
-- Only approved hosts and routes are publicly reachable.
-- TLS is configured correctly for any public endpoints.
-- Public routes reject unauthenticated traffic when access control is required.
-- Internal Prometheus or Grafana traffic does not depend on public ingress exposure.
+Confirm the API, Prometheus, and Grafana Services are `ClusterIP` and that no
+Ingress in the application namespaces routes to them. Validate any
+platform-managed ingress separately.
 
 See the [tracker](tracker.md) for the overall Kubernetes remediation order and verification steps.
