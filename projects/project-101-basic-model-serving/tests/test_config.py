@@ -31,6 +31,9 @@ def test_settings_validation_errors():
         Settings(model_name="not-real")
 
     with pytest.raises(ValueError):
+        Settings(model_name="mobilenet_v2")
+
+    with pytest.raises(ValueError):
         Settings(device="cuda")
 
     with pytest.raises(ValueError):
@@ -38,3 +41,13 @@ def test_settings_validation_errors():
 
     with pytest.raises(ValueError):
         Settings(confidence_threshold=1.5)
+
+
+def test_settings_read_model_and_device_from_environment(monkeypatch):
+    monkeypatch.setenv("MODEL_NAME", "resnet50")
+    monkeypatch.setenv("DEVICE", "cpu")
+
+    settings = Settings()
+
+    assert settings.model_name == "resnet50"
+    assert settings.device == "cpu"

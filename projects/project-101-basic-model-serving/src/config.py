@@ -4,11 +4,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-try:
-    from pydantic_settings import BaseSettings
-except ModuleNotFoundError:  # pragma: no cover - compatibility for minimal envs
-    from pydantic import BaseModel as BaseSettings
-
+from pydantic_settings import BaseSettings
 import torch
 from pydantic import Field, validator
 
@@ -65,7 +61,7 @@ class Settings(BaseSettings):
 
     @validator("model_name")
     def validate_model_name(cls, value):
-        supported = ["resnet18", "resnet50", "mobilenet_v2"]
+        supported = ["resnet18", "resnet50"]
         normalized = str(value).lower()
         if normalized not in supported:
             raise ValueError(f"Model must be one of: {supported}")
@@ -74,14 +70,22 @@ class Settings(BaseSettings):
     @validator("device")
     def validate_device(cls, value):
         device = str(value).lower()
-        if device.startswith("cuda"):
-            if not torch.cuda.is_available():
-                raise ValueError("CUDA device specified but CUDA not available")
-            if device not in {"cuda", "cuda:0"} and not device.startswith("cuda:"):
-                raise ValueError("Invalid CUDA device format")
+        if device == "cpu":
             return device
-        if device not in {"cpu"}:
-            raise ValueError("Device must be 'cpu' or 'cuda'")
+        if device == "cuda":
+            device_index = 0
+        elif device.startswith("cuda:") and device[5:].isdigit():
+            device_index = int(device[5:])
+        else:
+            raise ValueError(
+                "Device must be 'cpu', 'cuda', or an available CUDA device "
+                "(e.g. 'cuda:0')"
+            )
+
+        if not torch.cuda.is_available():
+            raise ValueError("CUDA device specified but CUDA not available")
+        if device_index >= torch.cuda.device_count():
+            raise ValueError(f"CUDA device index {device_index} is not available")
         return device
 
     @validator("log_level")

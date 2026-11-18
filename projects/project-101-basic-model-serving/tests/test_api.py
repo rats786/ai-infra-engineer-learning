@@ -9,7 +9,8 @@ from fastapi.testclient import TestClient
 from PIL import Image
 from prometheus_client.parser import text_string_to_metric_families
 
-from src.api import app
+from src.api import app, startup_event
+from src.config import Settings
 
 
 def metric_value(metrics_text, metric_name, labels):
@@ -48,6 +49,10 @@ def test_root_endpoint(client):
 
 def test_health_check_when_model_is_loaded(client, monkeypatch):
     monkeypatch.setattr(app.state, "model", object())
+    monkeypatch.setattr(
+        "src.api.get_settings",
+        lambda: Settings(model_name="resnet50", device="cpu"),
+    )
 
     response = client.get("/health")
 
@@ -55,6 +60,42 @@ def test_health_check_when_model_is_loaded(client, monkeypatch):
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["model_loaded"] is True
+    assert payload["model_name"] == "resnet50"
+    assert payload["device"] == "cpu"
+
+
+@pytest.mark.asyncio
+async def test_startup_loads_configured_model_and_device(monkeypatch):
+    settings = Settings(model_name="resnet50", device="cpu")
+    loaded = {}
+
+    def load_configured_model(model_name, device):
+        loaded.update(model_name=model_name, device=device)
+        return object()
+
+    monkeypatch.setattr(app.state, "model", None)
+    monkeypatch.setattr("src.api.get_settings", lambda: settings)
+    monkeypatch.setattr("src.api.load_model", load_configured_model)
+
+    await startup_event()
+
+    assert loaded == {"model_name": "resnet50", "device": "cpu"}
+
+
+@pytest.mark.asyncio
+async def test_startup_rejects_unsupported_model_before_loading(monkeypatch):
+    def unsupported_settings():
+        return Settings(model_name="mobilenet_v2")
+
+    def fail_if_model_load_is_attempted(*args, **kwargs):
+        pytest.fail("Unsupported configuration must fail before model loading")
+
+    monkeypatch.setattr(app.state, "model", None)
+    monkeypatch.setattr("src.api.get_settings", unsupported_settings)
+    monkeypatch.setattr("src.api.load_model", fail_if_model_load_is_attempted)
+
+    with pytest.raises(ValueError):
+        await startup_event()
 
 
 def test_health_check_returns_service_unavailable_when_model_is_not_loaded(

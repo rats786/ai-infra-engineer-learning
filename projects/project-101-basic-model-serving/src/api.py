@@ -9,6 +9,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
+from src.config import get_settings
 from src.model import load_model
 
 logging.basicConfig(level=logging.INFO)
@@ -65,17 +66,24 @@ class PredictionResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
+    model_name: str
+    device: str
     version: str
     uptime_seconds: float
 
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting ML Model Serving API...")
+    settings = get_settings()
+    logger.info(
+        "Starting ML Model Serving API with model=%s on device=%s",
+        settings.model_name,
+        settings.device,
+    )
     try:
-        app.state.model = load_model("resnet18", "cpu")
+        app.state.model = load_model(settings.model_name, settings.device)
         app.state.start_time = time.time()
-        logger.info("Model loaded successfully")
+        logger.info("Model %s loaded successfully on %s", settings.model_name, settings.device)
     except Exception as exc:  # pragma: no cover - startup guard
         logger.warning("Model could not be loaded at startup: %s", exc)
         app.state.model = None
@@ -115,9 +123,12 @@ async def health_check():
     if app.state.model is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
 
+    settings = get_settings()
     return HealthResponse(
         status="healthy",
         model_loaded=True,
+        model_name=settings.model_name,
+        device=settings.device,
         version="1.0.0",
         uptime_seconds=time.time() - app.state.start_time,
     )
@@ -127,7 +138,8 @@ async def health_check():
 async def predict(file: UploadFile = File(...), top_k: int = 5):
     if app.state.model is None:
         try:
-            app.state.model = load_model("resnet18", "cpu")
+            settings = get_settings()
+            app.state.model = load_model(settings.model_name, settings.device)
         except Exception as exc:  # pragma: no cover - startup fallback
             raise HTTPException(status_code=503, detail="Model is not loaded") from exc
 
@@ -175,4 +187,5 @@ async def metrics():
 
 
 def preprocess_image(image_bytes: bytes):
-    return load_model("resnet18", "cpu").preprocess_image(image_bytes)
+    settings = get_settings()
+    return load_model(settings.model_name, settings.device).preprocess_image(image_bytes)

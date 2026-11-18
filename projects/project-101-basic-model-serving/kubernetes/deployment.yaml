@@ -94,7 +94,10 @@ spec:
               name: ml-model-config
               key: model_name
         - name: DEVICE
-          value: "cpu"
+          valueFrom:
+            configMapKeyRef:
+              name: ml-model-config
+              key: device
         - name: PORT
           value: "8000"
         - name: LOG_LEVEL
