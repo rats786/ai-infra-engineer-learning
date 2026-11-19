@@ -116,6 +116,8 @@ coverage.xml
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
+!projects/project-101-basic-model-serving/platform/secret-management/vault-bootstrap/.terraform.lock.hcl
+projects/project-101-basic-model-serving/platform/secret-management/charts/
 
 # Cloud credentials
 *credentials*.json

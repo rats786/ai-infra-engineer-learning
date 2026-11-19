@@ -1,21 +1,19 @@
 # Kubernetes Secret Management and ESO Feasibility
 
-**Researched:** 2026-11-17
+**Updated:** 2026-11-18
 **Scope:** Grafana credentials for `project-101-basic-model-serving`, with Docker Desktop Kubernetes as the currently reachable cluster and Azure/AKS as a possible future target.
 
 ## Summary
 
-For the current Grafana deployment, the simplest fit is a SOPS-encrypted Kubernetes Secret manifest using age. It keeps the resource declarative and allows the encrypted manifest to live in Git without committing a plaintext password.
+The approved implementation for the current Grafana deployment is a single-replica, persistent Raft Vault instance with ESO using Vault Kubernetes auth. ESO synchronizes the Grafana credential into an ordinary Kubernetes Secret; it does not remove the Secret from the cluster or encrypt it in etcd. Vault initialization and unseal are operator bootstrap steps. Terraform declares the KV v2 engine, Kubernetes auth method, policy, and role; entering the Grafana password into Vault remains a separate, one-time operator action.
 
-External Secrets Operator (ESO) is feasible, but it does not replace a secret provider: ESO synchronizes values from a provider into ordinary Kubernetes Secrets. For a future AKS deployment, Azure Key Vault with Microsoft Entra Workload Identity is the strongest fit if Azure is the target platform. For Docker Desktop alone, adopting ESO just to supply one Grafana password adds an operator and a provider dependency without eliminating the need for a secure bootstrap identity.
-
-No credentials were generated, no provider was selected, and no cluster resources were changed as part of this research.
+The design is intended for a trusted local learning cluster, not production HA. No credentials were generated or stored in source, and no cluster resources were changed while implementing the manifests.
 
 ## Current project context
 
 - Grafana expects a Secret named `grafana-credentials` with keys `admin-user` and `admin-password`; see [`grafana.yaml`](../../projects/project-101-basic-model-serving/monitoring/kubernetes/grafana/grafana.yaml).
-- The monitoring Kustomize configuration generates Grafana provisioning ConfigMaps but does not currently define that Secret; see [`monitoring/kustomization.yaml`](../../projects/project-101-basic-model-serving/monitoring/kustomization.yaml).
-- The deployment guide currently instructs users to create the Grafana Secret imperatively before applying Kustomize; see [Step 7: Deploy Grafana](../../projects/project-101-basic-model-serving/docs/DEPLOYMENT.md). That instruction should be replaced if the project adopts a declarative-only secret workflow.
+- The monitoring Kustomize configuration keeps Grafana's existing Secret references and now defines a namespace-scoped ESO `SecretStore`/`ExternalSecret`; see [`monitoring/kustomization.yaml`](../../projects/project-101-basic-model-serving/monitoring/kustomization.yaml).
+- The pinned platform chart definitions and Terraform bootstrap configuration are under [`platform/secret-management`](../../projects/project-101-basic-model-serving/platform/secret-management/). The deployment guide documents initialization/unseal and secure Grafana credential entry.
 - Kubernetes Secret `data` values are base64 encoded, not encrypted. Kubernetes documents that Secrets are stored unencrypted in etcd by default unless encryption at rest is configured; see [Kubernetes Secret good practices](https://kubernetes.io/docs/concepts/security/secrets-good-practices/) and [Encrypting Confidential Data at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
 
 ## ESO architecture and implications
@@ -57,7 +55,7 @@ ESO labels Workload Identity as its recommended Azure Key Vault authentication m
 
 Docker Desktop is suitable for trying ESO, but does not provide AKS's Entra federation automatically. The documented service-principal method can connect to Key Vault, but its client secret/certificate has to be provided to ESO through a Kubernetes Secret. That reintroduces a bootstrap credential and weakens the benefit for a single local Grafana password.
 
-If the goal is specifically to learn ESO locally, a lab Vault KV store is a plausible provider. Keep its credentials and persistence explicitly lab-scoped, use declarative manifests, and do not treat a local Vault development configuration as production security. If the goal is simply to deploy Grafana locally, SOPS + age is less infrastructure.
+The approved local exercise uses persistent single-replica Raft Vault with Kubernetes auth. It is not HA or production hardened; Vault runs without TLS inside the trusted cluster and its recovery material must be handled out of band.
 
 ## Options for the Grafana credential
 
@@ -71,14 +69,15 @@ SOPS supports YAML and age encryption; see the [SOPS documentation](https://gets
 
 Kustomize can generate a Secret from a file, literal, or environment file; see [Kustomize `secretGenerator`](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/secretgenerator/). A gitignored local credentials file is convenient for one developer, but it leaves the value in plaintext on disk and makes deployments dependent on local state. It is less suitable when the checked-in configuration should be the reproducible source of truth.
 
-## Recommendation
+## Decision and remaining risks
 
-1. **For Docker Desktop and this single Grafana credential:** use SOPS + age. Do not introduce ESO unless the goal is to learn or validate ESO.
-2. **For a future AKS deployment:** use Azure Key Vault with ESO and Microsoft Entra Workload Identity, with Azure resources provisioned declaratively.
-3. **For an ESO learning exercise on Docker Desktop:** use a dedicated lab Vault KV provider, or Azure Key Vault with a securely managed service-principal bootstrap credential. The Vault option is cloud-independent but brings extra local infrastructure; the Azure option is closer to the AKS target but requires the bootstrap secret.
-4. Do not use the same-cluster Kubernetes Secret provider as the backing store for this credential; it adds synchronization, not meaningful secret isolation.
+- **Approved for this local exercise:** Vault KV v2 + ESO Kubernetes auth; see the declarative chart definitions and Grafana store resources in the project.
+- **Not approved by deployment alone:** Vault initialization/unseal and one-time Grafana credential entry require separate operator execution and approval. Terraform describes Vault's post-init configuration without checking credentials into source control.
+- **Kubernetes version gap:** Docker Desktop is Kubernetes 1.30.5. The pinned Vault chart's metadata declares `>=1.20`, but HashiCorp's current chart documentation lists tested/supported Kubernetes releases as 1.32–1.36; 1.30.5 is outside that test range.
+- **Production hardening:** for AKS, reassess Azure Key Vault with Workload Identity or an HA Vault deployment. Configure TLS, encryption at rest, backups, and access controls before using real workloads.
+- Do not use the same-cluster Kubernetes Secret provider as the backing store; it adds synchronization, not meaningful secret isolation.
 
-Provider selection and deployment are pending user approval. Any ESO controller, provider identity, SecretStore, ExternalSecret, or Grafana Secret changes should be represented declaratively and reviewed before application.
+The repository now implements the approved local Vault/ESO learning design. Cluster deployment and the post-init Vault auth/policy/credential bootstrap remain separate, operator-reviewed actions. For AKS production, reassess Azure Key Vault with Workload Identity or an HA Vault deployment and configure encryption at rest, TLS, backups, and access controls.
 
 ## Sources
 
