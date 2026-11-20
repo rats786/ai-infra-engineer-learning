@@ -59,14 +59,17 @@ spec:
         prometheus.io/path: "/metrics"
 
     spec:
+      imagePullSecrets:
+      - name: ghcr-pull
+
       # TODO: Define containers
       containers:
       - name: ml-api
 
         image: ghcr.io/rats786/project-101-basic-model-serving:v1.0
 
-        # Versioned release tags are published by the GHCR workflow.
-        imagePullPolicy: IfNotPresent
+        # Use the image preloaded in the Docker Desktop image store.
+        imagePullPolicy: Never
 
         # TODO: Define container ports
         ports:
