@@ -7,17 +7,15 @@
 `kubectl apply -k monitoring` deploys Grafana independently in the `monitoring`
 namespace. Kustomize provisions the Prometheus datasource using in-cluster DNS
 and reuses the repository dashboard. A PersistentVolumeClaim stores Grafana
-state, and the admin credentials are read from the `grafana-credentials`
-Secret. ESO creates that Secret from the namespace-scoped Vault `SecretStore`
-and `ExternalSecret`; the Vault KV v2 entry and Kubernetes auth role require
-the documented post-initialization bootstrap. The Grafana Service is
-internal-only.
+state. The admin credentials are read from the `grafana-credentials`
+Kubernetes Secret, which an operator creates directly and interactively
+(password-based authentication); this project does not use Vault or the
+External Secrets Operator. The Grafana Service is internal-only.
 
 ## Verification still required
 
-Deploy and bootstrap the Vault/ESO platform before applying the monitoring
-Kustomize configuration. Confirm the SecretStore and ExternalSecret become
-Ready, then restart or reschedule Grafana and confirm the Prometheus datasource
-and ML API dashboard load and the PVC remains bound.
+Create the `grafana-credentials` Secret, then apply the monitoring Kustomize
+configuration. Confirm Grafana becomes Ready and the Prometheus datasource and
+ML API dashboard load, and that the PVC remains bound.
 
 See the [tracker](tracker.md) for the full Kubernetes deployment roadmap.

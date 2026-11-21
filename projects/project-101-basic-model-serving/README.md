@@ -127,6 +127,10 @@ From the repository root:
 docker compose up -d
 ```
 
+Set a unique `GRAFANA_PASSWORD` in the project `.env` file before starting the
+stack, then sign in to Grafana with `GRAFANA_USER` and `GRAFANA_PASSWORD`.
+`.env` is Git-ignored; do not commit it.
+
 Then confirm the containers are running:
 
 ```bash

@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - kubernetes/grafana/grafana.yaml
-  - kubernetes/grafana/vault-credentials.yaml
 configMapGenerator:
   - name: grafana-datasource
     files:

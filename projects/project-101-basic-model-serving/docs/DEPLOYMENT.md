@@ -43,8 +43,12 @@ docker-compose logs -f api
 # Verify services
 curl http://localhost:8000/health
 curl http://localhost:9090  # Prometheus
-open http://localhost:3000  # Grafana (admin/admin)
+open http://localhost:3000  # Grafana
 ```
+
+Sign in to Grafana with `GRAFANA_USER` and `GRAFANA_PASSWORD` from the local
+`.env` file. Set a unique password before starting the stack; `.env` is
+Git-ignored and must not be committed.
 
 ### Step 3: Test API
 
@@ -156,124 +160,46 @@ kubectl --context docker-desktop port-forward -n monitoring svc/prometheus 9090:
 # Visit http://localhost:9090/targets and confirm the ml-api target is UP.
 ```
 
-### Step 7: Deploy the Vault and ESO platform services
+### Step 7: Deploy Grafana with password-based authentication
 
-This local learning deployment uses a single Vault server with persistent
-integrated Raft storage and a namespace-scoped External Secrets Operator (ESO).
-The Vault and ESO Helm charts and image tags are pinned in
-`platform/secret-management/`. Kustomize's Helm integration and Helm 3.6+ are
-required to render the chart releases. Run these commands from
-`projects/project-101-basic-model-serving`:
-
-```bash
-kubectl kustomize --enable-helm platform/secret-management | kubectl --context docker-desktop apply -f -
-kubectl --context docker-desktop get pods,pvc -n vault
-kubectl --context docker-desktop get pods -n external-secrets
-```
-
-Vault uses the cluster's default StorageClass (Docker Desktop currently uses
-`hostpath`) for a 5Gi persistent volume. The service is `ClusterIP` only; no
-Ingress, NodePort, or LoadBalancer is created. The listener uses plaintext
-HTTP inside the cluster, so this configuration is for a trusted local learning
-cluster, not production or an untrusted multi-tenant cluster.
-
-The Vault chart declares Kubernetes `>=1.20`, but HashiCorp's current chart
-documentation lists tested/supported Kubernetes releases as 1.32–1.36.
-Docker Desktop's Kubernetes 1.30.5 is outside that documented test range; it
-may render but is not an officially covered version. Confirm compatibility or
-upgrade Kubernetes before relying on this setup.
-
-### Step 8: Initialize and configure Vault
-
-Vault does not run in dev mode and does not auto-initialize or auto-unseal.
-Wait until the Vault pod is running, then initialize the Raft node once:
+Grafana reads its admin username and password from the
+`monitoring/grafana-credentials` Kubernetes Secret. This project does not use
+Vault or the External Secrets Operator; create the Secret directly in an
+interactive terminal so the password is never written to a manifest, command
+argument, or shell history:
 
 ```bash
-kubectl --context docker-desktop exec -it -n vault vault-0 -- vault operator init
-```
+kubectl --context docker-desktop create namespace monitoring --dry-run=client -o yaml | \
+  kubectl --context docker-desktop apply -f -
 
-Store the displayed recovery shares and initial root token in a secure
-password manager or other approved offline location. Do not put them in Git,
-a Kubernetes Secret, terminal transcript, or ticket. Unseal the node using
-three distinct shares (the default initialization threshold is 3 of 5):
-
-```bash
-kubectl --context docker-desktop exec -it -n vault vault-0 -- vault operator unseal
-```
-
-Repeat the unseal command twice more, entering a different recovery share each
-time. A restarted pod will need to be unsealed again. The PVC preserves the
-Raft data across pod restarts, but this one-replica deployment is not highly
-available and cannot tolerate loss of its node or volume.
-
-After unsealing, use Terraform to declaratively configure the Kubernetes auth
-method, least-privilege Grafana policy/role, and KV v2 engine. Terraform reads
-the initial root token from `VAULT_TOKEN`; it is not stored in the repository
-or Terraform configuration. The Terraform state contains Vault configuration
-metadata, not the Grafana password, and is Git-ignored.
-Install Terraform CLI and the Vault CLI before continuing; use a Vault CLI
-compatible with the server version shown by the pinned Helm chart.
-
-```bash
-# Terminal 1
-kubectl --context docker-desktop port-forward -n vault svc/vault 8200:8200
-
-# Terminal 2
-export VAULT_ADDR=http://127.0.0.1:8200
-read -rsp "Vault initial root token: " VAULT_TOKEN
+read -rsp "Grafana admin password: " GRAFANA_ADMIN_PASSWORD
 echo
-export VAULT_TOKEN
-terraform -chdir=platform/secret-management/vault-bootstrap init
-terraform -chdir=platform/secret-management/vault-bootstrap apply
-```
-
-Entering the Grafana credential is a separate one-time secret-data operation,
-not part of Terraform state. Do not run it until the secure credential-entry
-step is approved. Enter a strong password without echoing or saving it:
-
-```bash
-read -rsp "Set Grafana admin password: " GRAFANA_ADMIN_PASSWORD
-echo
-printf '%s' "$GRAFANA_ADMIN_PASSWORD" | vault kv put secret/project-101/grafana admin-user=admin admin-password=-
+kubectl --context docker-desktop create secret generic grafana-credentials \
+  -n monitoring \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$GRAFANA_ADMIN_PASSWORD" \
+  --dry-run=client -o yaml | kubectl --context docker-desktop apply -f -
 unset GRAFANA_ADMIN_PASSWORD
-vault token revoke -self
-unset VAULT_TOKEN
 ```
 
-The checked-in Terraform policy grants read access only to the Grafana KV v2
-path. The Vault Kubernetes auth role accepts only the `vault-auth`
-ServiceAccount in `monitoring`, requires the `vault` JWT audience, and issues
-a short-lived token. The chart grants Vault's own ServiceAccount the
-token-review permissions required by Kubernetes auth. The Terraform apply
-and credential entry are separate operator actions; obtain approval before
-running either against a cluster. Vault initialization/unseal approval alone
-does not authorize post-init configuration or secret entry.
-
-### Step 9: Deploy Grafana
-
-After Vault is initialized, unsealed, and configured as above, apply the
-monitoring Kustomize configuration. ESO reads the Vault KV v2 entry
-`secret/project-101/grafana` and creates the `grafana-credentials` Secret
-with `admin-user` and `admin-password`; Grafana's existing Secret references
-remain unchanged.
+The generated Secret exists only in the cluster; never export it back into
+the repository or print its data. Then apply the monitoring Kustomize
+configuration:
 
 ```bash
 kubectl --context docker-desktop apply -k monitoring
 kubectl --context docker-desktop get pods,svc,pvc -n monitoring
-kubectl --context docker-desktop get secretstores,externalsecrets -n monitoring
 ```
 
-Wait for the `vault-grafana` SecretStore and `grafana-credentials`
-ExternalSecret to report Ready before expecting Grafana to start. The
-Grafana Service is internal. For local access, run:
+The Grafana Service is internal. For local access, run:
 
 ```bash
 kubectl --context docker-desktop port-forward -n monitoring svc/grafana 3000:3000
 ```
 
-Then open `http://localhost:3000` and sign in with the username and password
-stored in the Secret. Grafana data uses a 1Gi PersistentVolumeClaim, which
-requires a default StorageClass in the cluster.
+Then open `http://localhost:3000` and sign in as `admin` with the password
+entered above. Grafana data uses a 1Gi PersistentVolumeClaim, which requires a
+default StorageClass in the cluster.
 
 ### External access policy
 
@@ -283,13 +209,11 @@ ingress controller as cluster infrastructure; only add a route after its
 hostname, TLS certificate, and access-control policy are approved. Do not
 expose the unauthenticated API publicly.
 
-### Step 10: Cleanup
+### Step 8: Cleanup
 
 ```bash
 kubectl --context docker-desktop delete namespace ml-serving
 kubectl --context docker-desktop delete namespace monitoring
-kubectl --context docker-desktop delete namespace external-secrets
-kubectl --context docker-desktop delete namespace vault
 minikube stop
 # Or: minikube delete
 ```
