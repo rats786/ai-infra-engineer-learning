@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ml-api-dev'
+    environment: 'development'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'ml-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['ml-model-serving-service.ml-serving.svc.cluster.local:80']
+        labels:
+          service: 'ml-api'
+          version: 'v1'
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
