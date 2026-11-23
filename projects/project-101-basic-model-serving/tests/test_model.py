@@ -26,6 +26,8 @@ def test_model_init():
     model = ModelInference(model_name="resnet18", device="cpu")
     assert model.model is None
     assert model.model_name == "resnet18"
+    assert model.weights is not None
+    assert len(model.classes) == 1000
     assert str(model.device) == "cpu"
 
 

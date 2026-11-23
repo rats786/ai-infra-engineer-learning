@@ -68,8 +68,8 @@ spec:
 
         image: ghcr.io/rats786/project-101-basic-model-serving:v1.0
 
-        # Use the image preloaded in the Docker Desktop image store.
-        imagePullPolicy: Never
+        # AKS nodes must pull the published image; the GHCR pull secret is declared below.
+        imagePullPolicy: IfNotPresent
 
         # TODO: Define container ports
         ports:

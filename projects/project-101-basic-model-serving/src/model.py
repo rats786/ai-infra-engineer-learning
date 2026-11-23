@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 
 import torch
 import torchvision.models as models
-import torchvision.transforms as transforms
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -25,7 +24,8 @@ class ModelInference:
         self.model_name = normalized_name
         self.device = torch.device(device)
         self.model = None
-        self.preprocess = self._create_transforms()
+        self.weights = self._get_pretrained_weights()
+        self.preprocess = self.weights.transforms()
         self.classes = self._load_class_labels()
 
     def load_model(self) -> None:
@@ -37,9 +37,9 @@ class ModelInference:
             self.device = torch.device("cpu")
 
         if self.model_name == "resnet18":
-            self.model = models.resnet18(weights=None)
+            self.model = models.resnet18(weights=self.weights)
         elif self.model_name == "resnet50":
-            self.model = models.resnet50(weights=None)
+            self.model = models.resnet50(weights=self.weights)
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")
 
@@ -52,21 +52,19 @@ class ModelInference:
 
         logger.info("Model %s loaded successfully", self.model_name)
 
-    def _create_transforms(self) -> transforms.Compose:
-        return transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-            ]
-        )
+    def _get_pretrained_weights(self) -> Any:
+        if self.model_name == "resnet18":
+            return models.ResNet18_Weights.DEFAULT
+        if self.model_name == "resnet50":
+            return models.ResNet50_Weights.DEFAULT
+        raise ValueError(f"Unsupported model: {self.model_name}")
 
     def _load_class_labels(self) -> List[str]:
         logger.info("Loading class labels")
+        pretrained_categories = self.weights.meta.get("categories", [])
+        if pretrained_categories:
+            return list(pretrained_categories)
+
         candidate_paths = [
             os.path.join(os.getcwd(), "imagenet_classes.txt"),
             os.path.join(os.path.dirname(__file__), "..", "imagenet_classes.txt"),
