@@ -12,11 +12,11 @@
 | Metric | Value |
 | :--- | :--- |
 | **Total Tasks** | 18 |
-| **Completed** | 0 |
+| **Completed** | 3 |
 | **In Progress** | 0 |
-| **Pending** | 18 |
+| **Pending** | 15 |
 | **Current Project Phase** | Phase 1: Environment & Config Preparation |
-| **Overall Completion** | 0% |
+| **Overall Completion** | 17% |
 
 ---
 
@@ -24,10 +24,10 @@
 
 | Task ID | Workstream | Item / Description | Priority | Severity | Status | Dependencies | Owner / Target |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **TRK-01** | Infrastructure | Generate `.env` with valid Fernet & Webserver secret keys | P0 | Blocker | `PENDING` | None | Local Env |
-| **TRK-02** | Infrastructure | Create pre-requisite host directories (`data/`, `models/`, `logs/`) | P0 | High | `PENDING` | None | Filesystem |
-| **TRK-03** | Infrastructure | Add `minio-create-bucket` init container in `docker-compose.yml` | P0 | Blocker | `PENDING` | TRK-01 | Docker Compose |
-| **TRK-04** | Infrastructure | Optimize `requirements.txt` to avoid heavy Torch build in Airflow | P1 | High | `PENDING` | None | Airflow Image |
+| **TRK-01** | Infrastructure | Generate `.env` with valid Fernet & Webserver secret keys | P0 | Blocker | `PENDING - USER ACTION` | None | Local Env |
+| **TRK-02** | Infrastructure | Create pre-requisite host directories (`data/`, `models/`, `logs/`, `plugins/`) | P0 | High | `CODE COMPLETE` | None | Filesystem |
+| **TRK-03** | Infrastructure | Add `minio-create-bucket` init container in `docker-compose.yml` | P0 | Blocker | `CODE COMPLETE` | TRK-01 | Docker Compose |
+| **TRK-04** | Infrastructure | Optimize `requirements.txt` to avoid heavy Torch build in Airflow | P1 | High | `CODE COMPLETE` | None | Airflow Image |
 | **TRK-05** | Core ML | Implement data ingestion & validation in `src/data/` | P1 | High | `PENDING` | TRK-02 | Pipeline |
 | **TRK-06** | Core ML | Implement preprocessing pipeline in `src/data/preprocessing.py` | P1 | High | `PENDING` | TRK-05 | Pipeline |
 | **TRK-07** | Core ML | Implement scikit-learn model trainer with MLflow logging | P1 | High | `PENDING` | TRK-06 | Pipeline |
@@ -48,10 +48,10 @@
 ## 3. Milestone Progress Checklist
 
 ### Milestone 1: Environment & Config Readiness
-- [ ] **TRK-01**: Generate active `.env` file with Fernet and webserver secret keys.
-- [ ] **TRK-02**: Verify host volume directories exist (`data/raw`, `data/processed`, `models`, `logs`, `plugins`).
-- [ ] **TRK-03**: Configure `minio-create-bucket` in `docker-compose.yml` to automatically provision `mlflow-artifacts`.
-- [ ] **TRK-04**: Optimize `requirements.txt` to avoid multi-gigabyte build times for the Airflow image.
+- [ ] **TRK-01**: Generate the local ignored `.env` file with Fernet and webserver secret keys.
+- [x] **TRK-02**: Track required host volume directories (`data/raw`, `data/processed`, `models`, `logs`, `plugins`) with `.gitkeep` files.
+- [x] **TRK-03**: Configure the health-gated `minio-create-bucket` service and make MLflow wait for successful bucket creation.
+- [x] **TRK-04**: Keep Airflow dependencies lightweight and separate optional/development dependencies.
 
 ### Milestone 2: Functional Pipeline Logic
 - [ ] **TRK-05**: Implement dataset ingestion in `src/data/ingestion.py` and schema checks in `src/data/validation.py`.
@@ -88,3 +88,4 @@
 | :--- | :--- | :--- | :--- |
 | Nov 2026 | Initialization | Initialized Master Task Board with 18 tasks across 7 milestones | Antigravity |
 | Nov 2026 | Documentation | Separated tracker and remediation into dedicated `planning/` folder | Antigravity |
+| 25 Nov 2026 | Phase 1 | Completed directory, MinIO bootstrap, and dependency configuration; local `.env` generation remains a user-run step | Copilot |
