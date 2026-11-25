@@ -123,8 +123,8 @@ kubectl get events -n ml-serving --sort-by='.lastTimestamp'
 **Symptoms:**
 ```
 Events:
-  Warning  Failed     5m    kubelet  Failed to pull image "ghcr.io/rats786/project-101-basic-model-serving:v1.0"
-  Warning  BackOff    2m    kubelet  Back-off pulling image "ghcr.io/rats786/project-101-basic-model-serving:v1.0"
+  Warning  Failed     5m    kubelet  Failed to pull image "ghcr.io/rats786/project-101-basic-model-serving:v1.1"
+  Warning  BackOff    2m    kubelet  Back-off pulling image "ghcr.io/rats786/project-101-basic-model-serving:v1.1"
 ```
 
 **Solutions:**
@@ -132,10 +132,10 @@ Events:
 # Confirm the GHCR publishing workflow succeeded and the package is public.
 
 # To use a locally built image in minikube/kind, load the same image reference:
-docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
-minikube image load ghcr.io/rats786/project-101-basic-model-serving:v1.0
+docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.1 .
+minikube image load ghcr.io/rats786/project-101-basic-model-serving:v1.1
 # or
-kind load docker-image ghcr.io/rats786/project-101-basic-model-serving:v1.0
+kind load docker-image ghcr.io/rats786/project-101-basic-model-serving:v1.1
 ```
 
 #### Issue: "CrashLoopBackOff"

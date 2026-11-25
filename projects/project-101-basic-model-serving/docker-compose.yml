@@ -3,6 +3,7 @@ version: '3.8'
 services:
   # ML API Service
   api:
+    image: ${APP_IMAGE:-ghcr.io/rats786/project-101-basic-model-serving:v1.1}
     build:
       context: .
       dockerfile: Dockerfile

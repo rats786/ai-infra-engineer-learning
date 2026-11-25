@@ -90,7 +90,8 @@ WORKDIR /app
 # TODO: Create non-root user
 RUN groupadd -r appuser && \
     useradd -r -g appuser appuser && \
-    chown -R appuser:appuser /app
+    mkdir -p /home/appuser/.cache/torch && \
+    chown -R appuser:appuser /app /home/appuser
 
 # TODO: Copy Python packages from builder stage
 # Copy installed packages from builder to keep image small
@@ -116,6 +117,8 @@ COPY --chown=appuser:appuser src/ ./src/
 # - PORT=8000
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    HOME=/home/appuser \
+    TORCH_HOME=/home/appuser/.cache/torch \
     MODEL_NAME=resnet18 \
     DEVICE=cpu \
     PORT=8000
@@ -135,7 +138,7 @@ EXPOSE 8000
 
 # TODO: Implement health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"
 
 # TODO: Switch to non-root user
 USER appuser
@@ -164,13 +167,13 @@ CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8
 # Build Instructions
 # ==============================================================================
 # To build this image:
-# docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
+# docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.1 .
 #
 # To build with specific model:
-# docker build --build-arg MODEL_NAME=resnet50 -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
+# docker build --build-arg MODEL_NAME=resnet50 -t ghcr.io/rats786/project-101-basic-model-serving:v1.1 .
 #
 # To run the container:
-# docker run -p 8000:8000 ghcr.io/rats786/project-101-basic-model-serving:v1.0
+# docker run -p 8000:8000 ghcr.io/rats786/project-101-basic-model-serving:v1.1
 #
 # To run with GPU:
 # docker run --gpus all -p 8000:8000 ml-model-serving-gpu:v1.0
@@ -203,8 +206,8 @@ CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8
 # ✅ Scan images for vulnerabilities
 #
 # Scan with:
-# docker scan ghcr.io/rats786/project-101-basic-model-serving:v1.0
-# trivy image ghcr.io/rats786/project-101-basic-model-serving:v1.0
+# docker scan ghcr.io/rats786/project-101-basic-model-serving:v1.1
+# trivy image ghcr.io/rats786/project-101-basic-model-serving:v1.1
 # ==============================================================================
 
 # ==============================================================================

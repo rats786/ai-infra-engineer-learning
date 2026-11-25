@@ -91,10 +91,10 @@ kubectl get nodes
 
 ```bash
 # Build the image using the same reference as the Kubernetes Deployment
-docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.0 .
+docker build -t ghcr.io/rats786/project-101-basic-model-serving:v1.1 .
 
 # Load image into minikube
-minikube image load ghcr.io/rats786/project-101-basic-model-serving:v1.0
+minikube image load ghcr.io/rats786/project-101-basic-model-serving:v1.1
 
 # Verify
 minikube image ls | grep project-101-basic-model-serving
@@ -223,11 +223,11 @@ minikube stop
 ## Option 3: Cloud Kubernetes (Production)
 
 The Kubernetes Deployment uses the public GHCR image
-`ghcr.io/rats786/project-101-basic-model-serving:v1.0`. Publish it with:
+`ghcr.io/rats786/project-101-basic-model-serving:v1.1`. Publish it with:
 
 ```bash
-git tag project-101-basic-model-serving-v1.0
-git push origin project-101-basic-model-serving-v1.0
+git tag project-101-basic-model-serving-v1.1
+git push origin project-101-basic-model-serving-v1.1
 ```
 
 The repository workflow builds and publishes the image. After its first

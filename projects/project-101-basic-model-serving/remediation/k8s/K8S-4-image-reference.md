@@ -5,7 +5,7 @@
 ## Current implementation
 
 The Deployment references the versioned GHCR image
-`ghcr.io/rats786/project-101-basic-model-serving:v1.0` with
+`ghcr.io/rats786/project-101-basic-model-serving:v1.1` with
 `imagePullPolicy: IfNotPresent`. A tag-triggered GitHub Actions workflow builds
 and publishes the image. After its first publish, the GHCR package must be made
 public for unauthenticated cluster pulls.

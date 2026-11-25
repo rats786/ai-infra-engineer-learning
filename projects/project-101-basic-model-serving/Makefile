@@ -6,6 +6,11 @@ endif
 KUBECTL ?= kubectl
 KUBECTL_CONTEXT ?=
 KUBECTL_CMD := $(KUBECTL) $(if $(KUBECTL_CONTEXT),--context $(KUBECTL_CONTEXT))
+DOCKER ?= docker
+
+IMAGE_NAME ?= ghcr.io/rats786/project-101-basic-model-serving
+IMAGE_TAG ?= v1.1
+APP_IMAGE ?= $(IMAGE_NAME):$(IMAGE_TAG)
 
 API_NAMESPACE ?= ml-serving
 MONITORING_NAMESPACE ?= monitoring
@@ -19,13 +24,15 @@ PROMETHEUS_LOCAL_PORT ?= 9090
 GRAFANA_LOCAL_PORT ?= 3000
 RUNTIME_DIR := .runtime
 
-.PHONY: help context deploy deploy-api deploy-monitoring delete delete-api delete-monitoring \
+.PHONY: help build-image push-image context deploy deploy-api deploy-monitoring delete delete-api delete-monitoring \
 	status status-api status-monitoring api-running forward-api forward-prometheus forward-grafana forward-all \
 	health-api health-prometheus health-grafana health-all review stop-port-forwards
 
-help: ## Show available AKS operations
+help: ## Show available image and AKS operations
 	@printf '%s\n' \
-		'API and monitoring commands for AKS (checked-in manifests are the source of truth):' \
+		'Image, API, and monitoring commands (checked-in manifests are the source of truth):' \
+		'  make build-image            Build the application image ($(APP_IMAGE))' \
+		'  make push-image             Push the application image to GHCR' \
 		'  make deploy                 Apply API and monitoring Kustomize manifests' \
 		'  make delete                 Delete API and monitoring Kustomize resources' \
 		'  make status                 Show API, Prometheus, Grafana, pods, and services' \
@@ -34,7 +41,14 @@ help: ## Show available AKS operations
 		'  make review                 Report status, start forwards, and run health checks' \
 		'  make stop-port-forwards     Stop port forwards started by this Makefile' \
 		'' \
+		'Optional: make IMAGE_TAG=v1.2 build-image push-image' \
 		'Optional: make KUBECTL_CONTEXT=my-aks-context review'
+
+build-image: ## Build the application image
+	$(DOCKER) build --tag $(APP_IMAGE) .
+
+push-image: build-image ## Build and push the application image
+	$(DOCKER) push $(APP_IMAGE)
 
 context: ## Show the Kubernetes context that will be used
 	@if [ -n "$(KUBECTL_CONTEXT)" ]; then \
