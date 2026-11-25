@@ -1,0 +1,7 @@
+# Optional deep learning and broader validation dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+dvc>=3.0.0
+great-expectations>=0.18.0
+pandera>=0.18.0
+

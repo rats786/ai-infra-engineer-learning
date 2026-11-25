@@ -32,8 +32,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install flake8 black isort mypy pylint
+          pip install -r requirements-dev.txt
 
       # TODO: Implement linting
       - name: Run Black (code formatting check)
@@ -77,8 +76,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-mock
+          pip install -r requirements-dev.txt
 
       # TODO: Implement unit tests
       - name: Run unit tests
@@ -107,7 +105,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       # TODO: Test data pipeline
       - name: Test data ingestion
@@ -140,7 +138,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       # TODO: Test model training
       - name: Test model training
@@ -198,7 +196,7 @@ jobs:
       - name: Install Airflow and dependencies
         run: |
           pip install apache-airflow==2.8.0
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       # TODO: Validate DAG syntax
       - name: Validate DAG syntax

@@ -44,9 +44,11 @@ setup:  ## Set up development environment
 setup-dev:  ## Set up development environment with dev dependencies
 	@echo "Setting up development environment with dev tools..."
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
-	$(PIP) install pytest pytest-cov black isort flake8 mypy pylint
+	$(PIP) install -r requirements-dev.txt
 	@echo "Development setup complete!"
+
+setup-optional:  ## Install optional deep learning and data-quality dependencies
+	$(PIP) install -r requirements-optional.txt
 
 # ============================================================
 # Code Quality

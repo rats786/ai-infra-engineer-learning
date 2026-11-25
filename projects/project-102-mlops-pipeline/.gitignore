@@ -90,6 +90,8 @@ mlflow.db
 airflow.db
 airflow.cfg
 logs/
+!logs/
+!logs/.gitkeep
 airflow-webserver.pid
 standalone_admin_password.txt
 
@@ -142,7 +144,8 @@ coverage.xml
 # Logs
 # ============================================================
 *.log
-logs/
+logs/*
+!logs/.gitkeep
 *.log.*
 
 # ============================================================
